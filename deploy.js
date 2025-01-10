@@ -7,7 +7,14 @@ const main = async () => {
   //http://127.0.0.1:7545
   const provider = new JsonRpcProvider("http://127.0.0.1:7545"); //connecting our javascript file to the local BLOCKCHAIN
   //const wallet = new ethers.Wallet("PRIVATE KEY (which is use to sign all of our transaction) of Account", RPC provider); //connecting this scipt to wallet which is in GANACHE
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+//   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+
+//  This is using encryptedKey.json file to make our PRIVATE_KEY more secure
+    const encryptedJson = fs.readFileSync("./.encryptedKey.json","utf-8");
+    let wallet = ethers.Wallet.fromEncryptedJsonSync(encryptedJson, process.env.PRIVATE_KEY_PASSWORD);
+    wallet = await wallet.connect(provider);
+
   //   provider.listAccounts().then(console.log).catch(console.error);
 
   //its like using axios or fetch to fetch data and remember ABI is in JSON format
