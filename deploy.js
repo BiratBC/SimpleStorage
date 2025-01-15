@@ -1,21 +1,22 @@
 const ethers = require("ethers");
 const fs = require("fs-extra");
 const { JsonRpcProvider } = require("ethers");
+const {utils} =require('ethers');
 require("dotenv").config();
 
 const main = async () => {
   //http://127.0.0.1:7545
-  const provider = new JsonRpcProvider("http://127.0.0.1:7545"); //connecting our javascript file to the local BLOCKCHAIN
+  //const provider = new JsonRpcProvider("http://127.0.0.1:7545"); //connecting our javascript file to the local BLOCKCHAIN
+  const provider = new JsonRpcProvider(process.env.RPC_URL); //connecting our javascript file to the local BLOCKCHAIN
   //const wallet = new ethers.Wallet("PRIVATE KEY (which is use to sign all of our transaction) of Account", RPC provider); //connecting this scipt to wallet which is in GANACHE
-//   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY_METAMASK, provider);
+  
 
-
-//  This is using encryptedKey.json file to make our PRIVATE_KEY more secure
-    const encryptedJson = fs.readFileSync("./.encryptedKey.json","utf-8");
-    let wallet = ethers.Wallet.fromEncryptedJsonSync(encryptedJson, process.env.PRIVATE_KEY_PASSWORD);
-    wallet = await wallet.connect(provider);
-
-  //   provider.listAccounts().then(console.log).catch(console.error);
+    //  This is using encryptedKey.json file to make our PRIVATE_KEY more secure {OPTIONAL PART}
+    // const encryptedJson = fs.readFileSync("./.encryptedKey.json","utf-8");
+    // let wallet = ethers.Wallet.fromEncryptedJsonSync(encryptedJson, process.env.PRIVATE_KEY_PASSWORD);
+    // wallet = await wallet.connect(provider);
+   //provider.listAccounts().then(console.log).catch(console.error);
 
   //its like using axios or fetch to fetch data and remember ABI is in JSON format
   const abi = fs.readFileSync("./SimpleStorage_sol_SimpleStorage.abi", "utf-8");
@@ -25,11 +26,11 @@ const main = async () => {
   );
   const contractFactory = new ethers.ContractFactory(abi, binary, wallet); //this is the way of connecting our contract using abi and wallet
   console.log("Deploying. .......");
-  const contract = await contractFactory.deploy();
-  //   console.log(contract);
+  const contract = await contractFactory.deploy({gasLimit : "6721975"});
+  await contract.deploymentTransaction().wait(1); //wait for a block and deploy
+  console.log(`Contract Address :  ${contract.target}`); //this is the syntax to access address of the contract
 
   //    { gasLimit: "6721975" }
-  await contract.deploymentTransaction().wait(1);
   //   console.log("Here is the deployment transaction ()");
   //   console.log(contract.deploymentTransaction);
   //   console.log("Here is the transaction receipt : ");
@@ -60,18 +61,18 @@ const main = async () => {
   console.log(
     `Current favourite Number is : ${currentFavouriteNumber.toString()}`
   );
-  const transactionResponse = await contract.store("7");
+  // const transactionResponse = await contract.store("7");
   // the .wait(number) will wait for the miner to include our transaction in consecutive "number" blocks after when puzzle (basically finding the nonce and more computational bcrypt) is solved
-  const transactionReceipt = await transactionResponse.wait(1);
-  const updatedFavouriteNumber = await contract.retrieve();
-  console.log(
-    `Updated favourite Number is : ${updatedFavouriteNumber.toString()}`
-  );
+  // const transactionReceipt = await transactionResponse.wait(1);
+  // const updatedFavouriteNumber = await contract.retrieve();
+  // console.log(
+  //   `Updated favourite Number is : ${updatedFavouriteNumber.toString()}`
+  // );
 };
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("Error : ",error);
     process.exit(1);
   });
